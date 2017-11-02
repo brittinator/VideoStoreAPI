@@ -88,19 +88,18 @@ func getAllCustomersHandler(w http.ResponseWriter, req *http.Request) {
 
 func createCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	var c Customer
-
 	err := json.NewDecoder(req.Body).Decode(&c)
 	// https://stackoverflow.com/questions/33238518/what-could-happen-if-i-dont-close-response-body-in-golang
 	defer req.Body.Close()
 
 	if err != nil {
-		json.NewEncoder(w).Encode(http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	Customers = append(Customers, c)
-
-	json.NewEncoder(w).Encode(http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(fmt.Sprintf("Customer %v successfully created", c.Name))
 }
 
 func deleteCustomerHandler(w http.ResponseWriter, req *http.Request) {

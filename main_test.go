@@ -76,6 +76,65 @@ func TestGetCustomer(t *testing.T) {
 	}
 }
 
+func TestCreateCustomerHandler(t *testing.T) {
+	testCases := []struct {
+		name    string
+		id      int
+		payload []byte
+
+		expected    string
+		code        int
+		expectError bool
+	}{
+		{
+			"overwriting works",
+			1,
+			[]byte(`{"id":"1","name":"Bonobo"}`),
+
+			`"Customer Bonobo successfully created"
+`,
+			http.StatusCreated,
+			false,
+		},
+		{
+			"net new customer",
+			100,
+			[]byte(`{"id":"100","name":"Mjobo"}`),
+
+			`"Customer Mjobo successfully created"
+`,
+			http.StatusCreated,
+			true,
+		},
+		{
+			"malformed request",
+			100,
+			[]byte(`{"i""""`),
+
+			"",
+			http.StatusBadRequest,
+			true,
+		},
+	}
+
+	Customers = setupDB()
+
+	router := mux.NewRouter()
+	addCustomerRoutes(router)
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("POST", fmt.Sprintf("/customers/%v", tt.id), bytes.NewBuffer(tt.payload))
+			require.NoError(t, err)
+
+			router.ServeHTTP(w, req)
+			assert.Equal(t, tt.code, w.Code)
+			assert.Equal(t, tt.expected, w.Body.String())
+		})
+	}
+}
+
 func TestDeleteCustomerHandler(t *testing.T) {
 	testCases := []struct {
 		name string
