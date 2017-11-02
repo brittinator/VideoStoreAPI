@@ -69,11 +69,13 @@ func getCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	// b/c there's no DB
 	for _, c := range Customers {
 		if c.ID == params["id"] {
+			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(c)
 			return
 		}
 	}
-	w.WriteHeader(http.StatusOK)
+	fmt.Println("Here")
+	w.WriteHeader(http.StatusNotFound)
 	json.NewEncoder(w).Encode(&Customer{})
 
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,6 +32,47 @@ func TestGetCustomers(t *testing.T) {
 	assert.Equal(t, expected, w.Body.String())
 }
 
-func TestGetNonExistentCustomer(t *testing.T) {
+func TestGetCustomer(t *testing.T) {
+
+	testCases := []struct {
+		name string
+		id   int
+
+		expected    string
+		code        int
+		expectError bool
+	}{
+		{
+			"does exist",
+			1,
+			"{\"id\":\"1\",\"name\":\"B\",\"city\":\"Honu\"}\n",
+			200,
+			false,
+		},
+		{
+			"does not exist",
+			100,
+			"{}\n",
+			404,
+			true,
+		},
+	}
+
+	Customers = setupDB()
+
+	router := mux.NewRouter()
+	addCustomerRoutes(router)
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", fmt.Sprintf("/customers/%v", tt.id), nil)
+			require.NoError(t, err)
+
+			router.ServeHTTP(w, req)
+			assert.Equal(t, tt.code, w.Code)
+			assert.Equal(t, tt.expected, w.Body.String())
+		})
+	}
 
 }
