@@ -10,6 +10,8 @@ Match up the routes to their handlers
 
 Call listenAndServe to actually use the router
 
+# How to run
+` go run main.go`
 
 # Calling endpoints
 
