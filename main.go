@@ -63,29 +63,39 @@ func Log(l *log.Logger, h http.Handler, name string) http.Handler {
 	})
 }
 
-func getCustomersHandler(w http.ResponseWriter, req *http.Request) {
+func getCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
 	// b/c there's no DB
 	for _, c := range Customers {
 		if c.ID == params["id"] {
 			json.NewEncoder(w).Encode(c)
-			break
+			return
 		}
 	}
-
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(&Customer{})
 
 }
 
 func getAllCustomersHandler(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	fmt.Println(Customers)
 	json.NewEncoder(w).Encode(&Customers)
 }
 
-func createCustomersHandler(w http.ResponseWriter, req *http.Request) {
+func createCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	var c Customer
 
-	json.NewDecoder(req.Body).Decode(&c)
+	err := json.NewDecoder(req.Body).Decode(&c)
+	// https://stackoverflow.com/questions/33238518/what-could-happen-if-i-dont-close-response-body-in-golang
+	defer req.Body.Close()
+
+	if err != nil {
+		json.NewEncoder(w).Encode(http.StatusBadRequest)
+		return
+	}
+
 	Customers = append(Customers, c)
 
 	json.NewEncoder(w).Encode(http.StatusCreated)
@@ -94,31 +104,59 @@ func createCustomersHandler(w http.ResponseWriter, req *http.Request) {
 func deleteCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
+	var found bool
 	for i, c := range Customers {
 		if c.ID == params["id"] {
 			json.NewEncoder(w).Encode(c)
 			Customers = append(Customers[:i], Customers[i+1:]...)
+			found = true
 			break
 		}
 	}
 
-	json.NewEncoder(w).Encode(http.StatusOK)
+	if !found {
+		json.NewEncoder(w).Encode(http.StatusNotFound)
+	} else {
+		json.NewEncoder(w).Encode(http.StatusOK)
+	}
 }
 
 func updateCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
-	var newC Customer
-	json.NewDecoder(req.Body).Decode(&newC)
+	var updatedCust Customer
+	err := json.NewDecoder(req.Body).Decode(&updatedCust)
+	defer req.Body.Close()
 
+	if err != nil {
+		json.NewEncoder(w).Encode(http.StatusBadRequest)
+		return
+	}
+
+	var found bool
 	for i, c := range Customers {
 		if c.ID == params["id"] {
-			Customers[i] = newC
-			json.NewEncoder(w).Encode(newC)
+			Customers[i] = updatedCust
+			json.NewEncoder(w).Encode(updatedCust)
+			found = true
 			break
 		}
 	}
 
-	json.NewEncoder(w).Encode(http.StatusOK)
+	if !found {
+		json.NewEncoder(w).Encode(http.StatusNotModified)
+	} else {
+		json.NewEncoder(w).Encode(http.StatusOK)
+	}
+}
+
+func addCustomerRoutes(r *mux.Router) {
+	cusRouter := r.PathPrefix("/customers").Subrouter()
+	cusRouter.HandleFunc("", getAllCustomersHandler).Methods("GET")
+	cusRouter.HandleFunc("/{id:[0-9]+}", getCustomerHandler).Methods("GET")
+	cusRouter.HandleFunc("/{id:[0-9]+}", updateCustomerHandler).Methods("PUT")
+	cusRouter.HandleFunc("/{id:[0-9]+}", createCustomerHandler).Methods("POST")
+	cusRouter.HandleFunc("/{id:[0-9]+}", deleteCustomerHandler).Methods("DELETE")
+
 }
 
 func main() {
@@ -127,12 +165,7 @@ func main() {
 	// logger := log.New(os.Stdout, "[VideoStoreAPI]", 0)
 	router := mux.NewRouter()
 
-	cusRouter := router.PathPrefix("/customers").Subrouter()
-	cusRouter.HandleFunc("", getAllCustomersHandler).Methods("GET")
-	cusRouter.HandleFunc("/{id:[0-9]+}", getCustomersHandler).Methods("GET")
-	cusRouter.HandleFunc("/{id:[0-9]+}", updateCustomerHandler).Methods("PUT")
-	cusRouter.HandleFunc("/{id:[0-9]+}", createCustomersHandler).Methods("POST")
-	cusRouter.HandleFunc("/{id:[0-9]+}", deleteCustomerHandler).Methods("DELETE")
+	addCustomerRoutes(router)
 
 	// fallthrough if no paths matched
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
