@@ -21,6 +21,9 @@ Create `curl -H "Content-Type: application/json" -d '{"id":"1", "name":"brittzle
 
 Delete `curl --request DELETE -H "Content-Type: application/json" -d '{"id":"1", "name":"brittzle-oRAMA"}' http://localhost:8080/customers/1`
 
+Filtering
+Currently only implemented filter by city. `curl localhost:8080/customers/filter_by=city/"Anchorage"` Should return 4 results.
+
 
 ## Reading Resources
 

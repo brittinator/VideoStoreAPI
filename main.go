@@ -74,7 +74,6 @@ func getCustomerHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	fmt.Println("Here")
 	w.WriteHeader(http.StatusNotFound)
 	json.NewEncoder(w).Encode(&Customer{})
 
@@ -82,7 +81,6 @@ func getCustomerHandler(w http.ResponseWriter, req *http.Request) {
 
 func getAllCustomersHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Println(Customers)
 	json.NewEncoder(w).Encode(&Customers)
 }
 
@@ -142,6 +140,46 @@ func updateCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(fmt.Sprintf("No customer with id %v found", params["id"]))
 }
 
+func canFilter(filter string) bool {
+	acceptableFilters := []string{"name", "city", "id", "state", "phone"}
+	for _, f := range acceptableFilters {
+		if f == filter {
+			return true
+		}
+	}
+	return false
+}
+
+func filterCustomerHandler(w http.ResponseWriter, req *http.Request) {
+	encoder := json.NewEncoder(w)
+	params := mux.Vars(req)
+
+	if !canFilter(params["filter"]) {
+		w.WriteHeader(http.StatusBadRequest)
+		encoder.Encode(fmt.Sprintf("Filter %v not a valid Customer filter", params["filter"]))
+		return
+	}
+
+	var foundCustomers []Customer
+	if params["filter"] == "city" {
+		foundCustomers = filterByCity(params["variable"])
+	}
+
+	w.WriteHeader(http.StatusOK)
+	encoder.Encode(foundCustomers)
+
+}
+
+func filterByCity(city string) []Customer {
+	var customers []Customer
+	for _, c := range Customers {
+		if c.City == city {
+			customers = append(customers, c)
+		}
+	}
+	return customers
+}
+
 func addCustomerRoutes(r *mux.Router) {
 	cusRouter := r.PathPrefix("/customers").Subrouter()
 	cusRouter.HandleFunc("", getAllCustomersHandler).Methods("GET")
@@ -149,7 +187,7 @@ func addCustomerRoutes(r *mux.Router) {
 	cusRouter.HandleFunc("/{id:[0-9]+}", updateCustomerHandler).Methods("PUT")
 	cusRouter.HandleFunc("/{id:[0-9]+}", createCustomerHandler).Methods("POST")
 	cusRouter.HandleFunc("/{id:[0-9]+}", deleteCustomerHandler).Methods("DELETE")
-
+	cusRouter.HandleFunc("/filter_by={filter}/{variable}", filterCustomerHandler).Methods("GET")
 }
 
 func main() {
