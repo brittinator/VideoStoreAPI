@@ -106,49 +106,41 @@ func createCustomerHandler(w http.ResponseWriter, req *http.Request) {
 func deleteCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
-	var found bool
 	for i, c := range Customers {
 		if c.ID == params["id"] {
-			json.NewEncoder(w).Encode(c)
 			Customers = append(Customers[:i], Customers[i+1:]...)
-			found = true
-			break
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(fmt.Sprintf("Customer %v successfully deleted", c.Name))
+			return
 		}
 	}
 
-	if !found {
-		json.NewEncoder(w).Encode(http.StatusNotFound)
-	} else {
-		json.NewEncoder(w).Encode(http.StatusOK)
-	}
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(fmt.Sprintf("No customer with id %v found", params["id"]))
 }
 
 func updateCustomerHandler(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
-	var updatedCust Customer
-	err := json.NewDecoder(req.Body).Decode(&updatedCust)
-	defer req.Body.Close()
 
-	if err != nil {
-		json.NewEncoder(w).Encode(http.StatusBadRequest)
-		return
-	}
-
-	var found bool
 	for i, c := range Customers {
 		if c.ID == params["id"] {
+			var updatedCust Customer
+			err := json.NewDecoder(req.Body).Decode(&updatedCust)
+			defer req.Body.Close()
+
+			if err != nil {
+				json.NewEncoder(w).Encode(http.StatusBadRequest)
+				return
+			}
 			Customers[i] = updatedCust
-			json.NewEncoder(w).Encode(updatedCust)
-			found = true
-			break
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(fmt.Sprintf("Customer %v updated to: %v", c.Name, updatedCust))
+			return
 		}
 	}
 
-	if !found {
-		json.NewEncoder(w).Encode(http.StatusNotModified)
-	} else {
-		json.NewEncoder(w).Encode(http.StatusOK)
-	}
+	w.WriteHeader(http.StatusNotModified)
+	json.NewEncoder(w).Encode(fmt.Sprintf("No customer with id %v found", params["id"]))
 }
 
 func addCustomerRoutes(r *mux.Router) {
