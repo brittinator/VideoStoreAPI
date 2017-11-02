@@ -20,3 +20,16 @@ Update: `curl --request PUT -H "Content-Type: application/json" -d '{"id":"1", "
 Create `curl -H "Content-Type: application/json" -d '{"id":"1", "name":"brittzle"}' http://localhost:8080/customers/1`
 
 Delete `curl --request DELETE -H "Content-Type: application/json" -d '{"id":"1", "name":"brittzle-oRAMA"}' http://localhost:8080/customers/1`
+
+
+## Reading Resources
+
+Here are a few of the great resources I used while making this
+
+* JSON parsing: https://www.chazzuka.com/2015/03/load-parse-json-file-golang/
+* API https://thenewstack.io/make-a-restful-json-api-go/
+* API https://www.thepolyglotdeveloper.com/2016/07/create-a-simple-restful-api-with-golang/
+* API + Mux: https://semaphoreci.com/community/tutorials/building-and-testing-a-rest-api-in-go-with-gorilla-mux-and-postgresql
+* Mux Routes: https://gowebexamples.com/routes-using-gorilla-mux/
+
+
