@@ -7,17 +7,18 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	customer "github.com/VideoStoreAPI/models/customers"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupDB() []Customer {
-	return []Customer{Customer{ID: "1", Name: "B", City: "Honu"}, Customer{ID: "2", Name: "C", City: "Zandu"}}
+func setupDB() []customer.Customer {
+	return []customer.Customer{customer.Customer{ID: "1", Name: "B", City: "Honu"}, customer.Customer{ID: "2", Name: "C", City: "Zandu"}}
 }
 
 func TestGetCustomers(t *testing.T) {
-	Customers = setupDB()
+	customer.Customers = setupDB()
 
 	router := mux.NewRouter()
 	addCustomerRoutes(router)
@@ -53,12 +54,12 @@ func TestGetCustomer(t *testing.T) {
 			"does not exist",
 			100,
 			"{}\n",
-			404,
+			200,
 			true,
 		},
 	}
 
-	Customers = setupDB()
+	customer.Customers = setupDB()
 
 	router := mux.NewRouter()
 	addCustomerRoutes(router)
@@ -117,7 +118,7 @@ func TestCreateCustomerHandler(t *testing.T) {
 		},
 	}
 
-	Customers = setupDB()
+	customer.Customers = setupDB()
 
 	router := mux.NewRouter()
 	addCustomerRoutes(router)
@@ -147,7 +148,7 @@ func TestDeleteCustomerHandler(t *testing.T) {
 		{
 			"does exist",
 			1,
-			`"Customer B successfully deleted"
+			`"Customer with id 1 successfully deleted"
 `,
 			200,
 			false,
@@ -162,7 +163,7 @@ func TestDeleteCustomerHandler(t *testing.T) {
 		},
 	}
 
-	Customers = setupDB()
+	customer.Customers = setupDB()
 
 	router := mux.NewRouter()
 	addCustomerRoutes(router)
@@ -195,7 +196,7 @@ func TestUpdateCustomerHandler(t *testing.T) {
 			1,
 			[]byte(`{"id":"1","name":"Bonobo"}`),
 
-			`"Customer B updated to: {1 Bonobo       0}"
+			`"Customer Bonobo updated to: {1 Bonobo       0}"
 `,
 			200,
 			false,
@@ -203,16 +204,25 @@ func TestUpdateCustomerHandler(t *testing.T) {
 		{
 			"does not exist",
 			100,
-			[]byte(`{"id":"100",name":"Bonobo"}`),
+			[]byte(`{"id":"100","name":"Bonobo"}`),
 
 			`"No customer with id 100 found"
 `,
 			304,
 			true,
 		},
+		{
+			"bad request",
+			100,
+			[]byte(`{"id":"100","name:"Bonobo"}`),
+			`400
+`,
+			400,
+			true,
+		},
 	}
 
-	Customers = setupDB()
+	customer.Customers = setupDB()
 
 	router := mux.NewRouter()
 	addCustomerRoutes(router)
