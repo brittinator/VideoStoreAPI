@@ -12,9 +12,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// // Customers is out in-memory "DB"
-// var Customers []Customer
-
 // LogIt spits out logs before returning a handler function
 func LogIt(l *log.Logger, inner http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(
@@ -134,41 +131,3 @@ func main() {
 	// actually activate the server
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
-
-// type Customer struct {
-// 	ID            string `json:"id,omitempty"`
-// 	Name          string `json:"name,omitempty"`
-// 	RegisteredAt  string `json:"registered_at,omitempty"`
-// 	Address       string `json:"address,omitempty"`
-// 	City          string `json:"city,omitempty"`
-// 	State         string `json:"state,omitempty"`
-// 	PostalCode    string `json:"postal_code,omitempty"`
-// 	Phone         string `json:"phone,omitempty"`
-// 	AccountCredit int    `json:"account_credit,float,omitempty"`
-// }
-
-// func (p Customer) toString() string {
-// 	return toJson(p)
-// }
-
-// func toJson(p interface{}) string {
-// 	bytes, err := json.Marshal(p)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		os.Exit(1)
-// 	}
-
-// 	return string(bytes)
-// }
-
-// func seedCustomers() []Customer {
-// 	raw, err := ioutil.ReadFile("./seeds/customer.json")
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		os.Exit(1)
-// 	}
-
-// 	var c []Customer
-// 	json.Unmarshal(raw, &c)
-// 	return c
-// }
